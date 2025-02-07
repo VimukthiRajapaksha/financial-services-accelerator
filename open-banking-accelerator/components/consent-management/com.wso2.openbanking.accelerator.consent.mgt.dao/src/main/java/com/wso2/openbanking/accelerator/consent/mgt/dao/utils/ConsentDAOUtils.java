@@ -21,9 +21,11 @@ package com.wso2.openbanking.accelerator.consent.mgt.dao.utils;
 import com.wso2.openbanking.accelerator.consent.mgt.dao.constants.ConsentMgtDAOConstants;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,8 @@ public class ConsentDAOUtils {
     private static final String PLACEHOLDER = "?";
     private static final String LEFT_PARENTHESIS = "(";
     private static final String RIGHT_PARENTHESIS = ")";
+    public static final String GROUP_BY_SEPARATOR = "\\|\\|";
+    public static final String ATT_VALUES_SEPARATOR = "@@";
     private static final Map<String, String> DB_OPERATORS_MAP = new HashMap<String, String>() {
         {
             put(ConsentMgtDAOConstants.IN, "IN");
@@ -272,5 +276,37 @@ public class ConsentDAOUtils {
             }
         }
         return whereClauseBuilder.toString();
+    }
+
+    /**
+     * Extracts the attribute values from a concatenated string of attribute key-value pairs.
+     * <p>
+     * The input string should be in the following format:
+     * "key1@@value1||key2@@value2" where keys and values are separated by "@@" and
+     * different key-value pairs are separated by "||".
+     * </p>
+     * This method splits the input into individual key-value pairs and returns an array containing
+     * only the values associated with each key.
+     * Example:
+     * <pre>
+     * String input = "key1@@value1||key2@@value2||key3@@value3";
+     * String[] result = extractAttributeValuesFromResultSet(input);
+     * // result will be: ["value1", "value2", "value3"]
+     * </pre>
+     *
+     * @param concatenatedKeyValuePairs The input string containing concatenated key-value pairs.
+     * @return An array of strings containing only the values extracted from the input string.
+     */
+    public static String[] extractAttributeValues(final String concatenatedKeyValuePairs) {
+
+        if (StringUtils.isEmpty(concatenatedKeyValuePairs)) {
+            return ArrayUtils.EMPTY_STRING_ARRAY;
+        }
+
+        return Arrays.stream(concatenatedKeyValuePairs.split(GROUP_BY_SEPARATOR))
+                .map(keyValuePair -> keyValuePair.split(ATT_VALUES_SEPARATOR))
+                .filter(keyValuePair -> keyValuePair.length == 2)
+                .map(keyValuePair -> keyValuePair[1])
+                .toArray(String[]::new);
     }
 }
